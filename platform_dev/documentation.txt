@@ -1,0 +1,49 @@
+Implementation:
+- My solution is implemented as a Flask app connected to a MongoDB collection. I have "containerized" this app using Docker and docker-compose. docker-compose orchestrates the building and "spinning-up" of these containers. Implementing this app in Docker allows for easy scaling as well as the ability to share the app with anyone (with docker installed) without having to worry about dependencies.
+- To identify anagrams, I sort each word's letters. Words with the same sorted letters are anagrams of one another.
+- To store anagrams, I save words in a hashmap (Python dictionary). This allows for constant time store/search/retrieval.
+	- For example, if I get a request to store the words ["read", "dear", "dare"] I will save them in the following key/value pair:
+		'aedr' => ['read', 'dear', 'dare']
+- I then save these key/value pairs to a mongoDB collection for persistence.
+- To search for anagrams of a word, I sort the requested word's letters and search for this key. Since Mongo uses a hash function in its implementation, searching for a key will be done in constant time.
+- I implemented the optional functionality and wrote tests for each of them. Tests I have written are marked with the comment "# Robert Crimi" above the function.
+
+
+Dependencies:
+Since this app has been "containerized", all that should be needed is the following (versions don't need to be exact as long as all three tools are installed):
+docker == 1.11.1
+docker-machine == 0.5.5
+docker-compose == 1.11.2
+
+To Run:
+1. 'cd' into the platform_dev main folder
+2. run 'docker-compose build'
+3. run 'docker-compose up'
+	- Docker will spin up two containers with an interactive shell (ie you should see requests come through the terminal)
+4. run 'ruby anagram_test.rb'
+	- If you get a ruby error:
+		- I had to change some lines to work with my version of ruby
+			- require 'test/unit' (line 4) => require 'minitest/autorun'
+			- #class TestCases < Test::Unit::TestCase => class TestCases < Minitest::Test
+	- If you get connection errors, try the following solutions:
+		1. Start default docker machine with 'docker-machine start default'
+		2. Check the default docker machine ip with 'docker-machine ip default'
+			- If this command returns a different ip than 192.168.99.100 you will need to change the host names in the following files: 
+				flask-app/app.py (line 7) and anagram_client.rb (line 10)
+
+Edge Cases:
+- deleting word that does not exist
+	- Solution: Attempt to delete word and if not in corpus return message noting the absence of the word
+	- Tested: test_deleting_word_not_in_corpus
+- adding word that already exists
+	- Solution: Do not add words multiple times
+	- Tested: test_adding_words_twice
+- capital first letter
+	- Solution: 'Read' and 'read' are valid anagrams of of one another.
+- requested limit is float
+	- Solution: I cast the limit as an integer so this will avoid any problem.
+
+Notes:
+- curl post request needs 'application/json'
+- Should put quotes around url in curl request.
+	For example, when using two optional arguments (limit=1&includeProper=False)

@@ -1,0 +1,15 @@
+flask:
+  build: flask-app
+  volumes:
+    - app:/app
+  links:
+    - mongodb
+  ports:
+    - "3000:3000"
+  command: /usr/bin/python app.py
+mongodb:
+  build: mongo
+  volumes:
+    - data:/data
+  ports:
+    - "27017:27017"
